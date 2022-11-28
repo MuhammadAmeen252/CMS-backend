@@ -5,6 +5,7 @@ const morgan = require("morgan");
 const glob = require("glob");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const mongoSanitize = require('express-mongo-sanitize');
 const http = require("http");
 const app = express();
 /** Create HTTP server. */
@@ -15,7 +16,11 @@ dotenv.config({ path: __dirname + "/.env" });
 const PORT = process.env.PORT || 8080;
 
 //cross origin resourse sharing (Enable all cors requests here)
-app.use(cors());
+let corsOptions = {
+  origin: 'http://localhost:3000',
+  credentials: true,
+}
+app.use(cors(corsOptions));
 
 //establish connection with db
 require("./src/db/mongoose");
@@ -25,6 +30,14 @@ app.use(morgan("tiny"));
 
 //parse request to body parser
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
+
+// prevention from XSS attacks
+app.use(
+  mongoSanitize({
+    allowDots: true,
+    replaceWith: '_',
+  }),
+);
 
 //update limit of recieving json data
 app.use(express.json({ limit: "50mb" }));
